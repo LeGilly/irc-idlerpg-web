@@ -9,7 +9,9 @@ const IRPG = (() => {
   const DAY = 86400;
   const MAP = 500;
   const LOG_MAX = 500;
-  const BOT_COUNT = 30;
+  const BOT_COUNT = 30;        // bots in a brand-new world
+  const MAX_BOTS = 100;        // newcomers keep joining until this many bots exist
+  const JOIN_RATE = 2;         // newcomers per game day at BOT_COUNT, tapering to 0 at MAX_BOTS
   const MAX_CATCHUP_STEPS = 200000;
 
   let S = null;            // game state
@@ -390,6 +392,32 @@ const IRPG = (() => {
     }
   }
 
+  // ---------- newcomers ----------
+  function newBotName() {
+    const taken = new Set(S.players.map(p => p.name.toLowerCase()));
+    const unused = D.botNames.filter(n => !taken.has(n.toLowerCase()));
+    if (unused.length && rnd() < 0.5) return pick(unused);
+    for (let i = 0; i < 100; i++) {
+      let n = pick(D.nickRoots) + pick(D.nickSuffixes);
+      if (rnd() < 0.35) n = n.toLowerCase();
+      if (n.length <= 16 && !taken.has(n.toLowerCase())) return n;
+    }
+    let n;
+    do { n = 'newbie' + randInt(100, 99999); } while (taken.has(n));
+    return n;
+  }
+
+  // New, weaker players join over time; the closer to MAX_BOTS, the rarer.
+  function botJoins(dt) {
+    const bots = S.players.length - 1;
+    if (bots >= MAX_BOTS) return;
+    const perDay = JOIN_RATE * (MAX_BOTS - bots) / (MAX_BOTS - BOT_COUNT);
+    if (rnd() >= perDay * dt / DAY) return;
+    const b = newPlayer(newBotName(), pick(D.botClasses), pick(['g', 'n', 'n', 'e']), false);
+    S.players.push(b);
+    log(`${b.name}, the ${b.cls}, has joined ${D.channel}! A new adventurer begins to idle. Next level in ${duration(b.ttl)}.`, 'join', [b]);
+  }
+
   // ---------- core simulation step ----------
   function step(dt) {
     S.gameTime += dt;
@@ -444,6 +472,7 @@ const IRPG = (() => {
 
     questTick(dt);
     botPresence(dt);
+    botJoins(dt);
   }
 
   // Advance the world by gameSeconds of game time.
