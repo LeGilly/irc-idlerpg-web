@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IdleRPG Web</title>
+  <meta name="description" content="A web remake of the classic IRC IdleRPG: the game that plays itself.">
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="hash">#</span>idlerpg</div>
+      <div class="topic" id="topic">Topic: Welcome to IdleRPG Web &mdash; the game that plays itself.</div>
+    </header>
+
+    <main class="layout">
+      <section class="chat">
+        <div class="chat-tabs">
+          <button class="tab active" data-filter="all">Channel</button>
+          <button class="tab" data-filter="mine">My events</button>
+          <span class="online-count" id="onlineCount"></span>
+        </div>
+        <div class="log" id="log" aria-live="polite"></div>
+        <form class="cmd" id="cmdForm" autocomplete="off">
+          <span class="prompt">/msg IdleBot</span>
+          <input id="cmdInput" type="text" placeholder="type HELP (commands are free, no penalties)" maxlength="80">
+        </form>
+      </section>
+
+      <aside class="side">
+        <nav class="side-tabs">
+          <button class="stab active" data-panel="char">Hero</button>
+          <button class="stab" data-panel="players">Players</button>
+          <button class="stab" data-panel="map">Map</button>
+          <button class="stab" data-panel="settings">Settings</button>
+        </nav>
+
+        <div class="panel active" id="panel-char">
+          <div class="hero">
+            <div class="hero-name" id="heroName"></div>
+            <div class="hero-class" id="heroClass"></div>
+            <div class="hero-level"><span class="lvl-label">Level</span> <span id="heroLevel">0</span></div>
+            <div class="bar"><div class="bar-fill" id="heroBar"></div></div>
+            <div class="hero-ttl">Next level in <b id="heroTtl"></b></div>
+            <div class="hero-real" id="heroReal"></div>
+            <dl class="stats">
+              <dt>Alignment</dt><dd id="heroAlign"></dd>
+              <dt>Item sum</dt><dd id="heroSum"></dd>
+              <dt>Battles</dt><dd id="heroWL"></dd>
+              <dt>Rank</dt><dd id="heroRank"></dd>
+              <dt>Idled for</dt><dd id="heroIdled"></dd>
+              <dt>Position</dt><dd id="heroPos"></dd>
+            </dl>
+          </div>
+          <h3>Equipment</h3>
+          <table class="items" id="items"></table>
+          <div class="quest-box" id="questBox"></div>
+        </div>
+
+        <div class="panel" id="panel-players">
+          <table class="players">
+            <thead><tr><th>#</th><th>Name</th><th>Lvl</th><th>Sum</th><th>Next level</th></tr></thead>
+            <tbody id="playersBody"></tbody>
+          </table>
+          <div class="inspect" id="inspect"></div>
+        </div>
+
+        <div class="panel" id="panel-map">
+          <canvas id="map" width="500" height="500"></canvas>
+          <p class="hint"><span class="dot me"></span> you &nbsp; <span class="dot other"></span> others &nbsp; <span class="dot quester"></span> questers &nbsp; <span class="dot goal"></span> quest goal</p>
+        </div>
+
+        <div class="panel" id="panel-settings">
+          <label class="field">Game speed
+            <select id="speedSelect">
+              <option value="1">1&times; (original timing)</option>
+              <option value="5">5&times;</option>
+              <option value="10">10&times;</option>
+              <option value="60">60&times;</option>
+            </select>
+          </label>
+          <p class="hint">Speed applies to the whole world, including time spent away.</p>
+          <label class="field">Alignment
+            <select id="alignSelect">
+              <option value="g">Good (+10% battle power, prayers, rarer crits)</option>
+              <option value="n">Neutral (no changes)</option>
+              <option value="e">Evil (&minus;10% power, theft, frequent crits)</option>
+            </select>
+          </label>
+          <div class="btn-row">
+            <button id="exportBtn" class="btn">Export save</button>
+            <label class="btn">Import save<input type="file" id="importFile" accept=".json,application/json" hidden></label>
+          </div>
+          <button id="resetBtn" class="btn danger">Delete character&hellip;</button>
+          <div class="about">
+            <h3>About</h3>
+            <p>A tribute to the classic <a href="https://idlerpg.net/" target="_blank" rel="noopener">IRC IdleRPG</a>. You do nothing; your hero levels up on their own, finds items, fights and goes on quests. The other adventurers are simulated. Your progress is saved in this browser and keeps going while the page is closed.</p>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Registration -->
+  <div class="modal" id="registerModal" hidden>
+    <form class="modal-card" id="registerForm">
+      <h2>/msg IdleBot REGISTER</h2>
+      <p>Create your hero. After that, there is nothing to do but wait.</p>
+      <label class="field">Name <input id="regName" maxlength="16" required pattern="[A-Za-z0-9_\-]+" title="Letters, numbers, _ and -, up to 16 characters"></label>
+      <label class="field">Class <input id="regClass" maxlength="30" required placeholder="e.g. Wizard of the Third Byte"></label>
+      <label class="field">Alignment
+        <select id="regAlign">
+          <option value="n" selected>Neutral</option>
+          <option value="g">Good</option>
+          <option value="e">Evil</option>
+        </select>
+      </label>
+      <label class="field">Game speed
+        <select id="regSpeed">
+          <option value="1" selected>1&times; (original timing)</option>
+          <option value="5">5&times;</option>
+          <option value="10">10&times;</option>
+          <option value="60">60&times;</option>
+        </select>
+      </label>
+      <button class="btn primary" type="submit">Begin idling</button>
+    </form>
+  </div>
+
+  <!-- Away summary -->
+  <div class="modal" id="awayModal" hidden>
+    <div class="modal-card">
+      <h2>While you were away&hellip;</h2>
+      <div id="awayText"></div>
+      <button class="btn primary" id="awayClose">Continue idling</button>
+    </div>
+  </div>
+
+  <div class="loading" id="loading" hidden>Catching up with the realm&hellip;</div>
+
+  <script src="js/data.js?v=1"></script>
+  <script src="js/engine.js?v=1"></script>
+  <script src="js/ui.js?v=1"></script>
+</body>
+</html>
