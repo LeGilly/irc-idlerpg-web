@@ -10,3 +10,9 @@ Register a hero, then do nothing. Your hero levels up on their own, finds items,
 - No penalties: nothing you type counts against you.
 
 Play: https://legilly.github.io/irc-idlerpg-web/
+
+## Versions
+
+The version shown on the site (top left, and in Settings > About) is in `index.html`.
+For each release, raise it by one and set every `?v=` number in `index.html` to the same value,
+so browsers fetch the fresh CSS/JS. Current version: 3.

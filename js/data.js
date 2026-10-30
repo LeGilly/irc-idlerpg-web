@@ -63,6 +63,13 @@ const IRPG_DATA = {
     'Borgnine', 'Wynnifred', 'ctrl_alt_del', 'Grimsby', 'Esmerelda', 'Snorri', 'chanop', 'Taliesin',
     'Bramblewick', 'm0rph', 'Isolde', 'Gundabad'
   ],
+  // Parts used to invent nicks for newcomers once the list above runs out
+  nickRoots: ['Grim', 'Shadow', 'Pixel', 'Byte', 'Moss', 'Frost', 'Ember', 'Rune', 'Ash', 'Storm', 'Lag',
+    'Echo', 'Nyx', 'Bolt', 'Fang', 'Wisp', 'Thorn', 'Quill', 'Rook', 'Vex', 'Bramble', 'Cinder', 'Dusk',
+    'Gloom', 'Hex', 'Iron', 'Jinx', 'Krag', 'Loot', 'Mire', 'Noob', 'Oak', 'Pip', 'Rust', 'Sock', 'Toad', 'Zed'],
+  nickSuffixes: ['', '', 'ly', 'wick', 'bane', 'fist', '_', '2000', '99', 'x', 'er', 'heart', 'smith',
+    'song', '42', 'z', '_irc', 'o', 'kin', 'ton'],
+
   botClasses: [
     'Wizard of the Third Byte', 'Paladin of Perpetual AFK', 'Barbarian', 'Necromancer of Old Logs',
     'Bard Who Never Speaks', 'Ranger', 'Rogue', 'Cleric of the Ping', 'Druid', 'Knight of the Topic',
