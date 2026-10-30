@@ -37,12 +37,56 @@
   }
 
   // ---------- log ----------
+  // How an event turned out for YOU: 'good', 'bad' or '' (neutral).
+  // Battles, critical strikes and thefts involve two players, so the colour of the line
+  // (challenger won = green) doesn't say whether it was good for you. Work it out from the text,
+  // which also works for events saved before this was added.
+  const SELF_GOOD = new Set(['level', 'item', 'unique', 'good', 'god']);
+  const SELF_BAD = new Set(['bad', 'god-bad', 'quest-bad']);
+  function outcomeFor(e, name) {
+    const t = String(e.text);
+    let r;
+    if (e.type === 'battle-win' || e.type === 'battle-loss') {
+      const won = e.type === 'battle-win';
+      if ((r = t.match(/(\S+) \[\d+\/\d+\] has challenged (\S+) \[/))) {
+        if (r[1] === name) return won ? 'good' : 'bad';     // you challenged
+        if (r[2] === name) return won ? 'bad' : 'good';     // you were challenged
+        return '';
+      }
+      if ((r = t.match(/^(.+?) \[\d+\/\d+\] have team battled/))) {
+        return r[1].split(', ').includes(name) ? (won ? 'good' : 'bad') : '';   // only the first team's clocks change
+      }
+      return '';
+    }
+    if (e.type === 'crit') {
+      r = t.match(/^(\S+) has dealt (\S+) a Critical Strike/);
+      return !r ? '' : r[1] === name ? 'good' : r[2] === name ? 'bad' : '';
+    }
+    if (e.type === 'steal') {
+      if ((r = t.match(/^In the fierce battle, (\S+) dropped .*?! (\S+) picks it up/))) return r[2] === name ? 'good' : r[1] === name ? 'bad' : '';
+      if ((r = t.match(/^(\S+) stole (\S+)'s/))) return r[1] === name ? 'good' : r[2] === name ? 'bad' : '';
+      return '';
+    }
+    if (e.type === 'quest') return / have blessed the realm /.test(t) ? 'good' : '';
+    if (SELF_GOOD.has(e.type)) return 'good';
+    if (SELF_BAD.has(e.type)) return 'bad';
+    return '';
+  }
+  const TWO_SIDED = new Set(['battle-win', 'battle-loss', 'crit', 'steal']);
+
   function lineHtml(e) {
     let msg = esc(e.text);
     const m = IRPG.me();
     if (m) msg = msg.replace(new RegExp('\\b' + escRe(esc(m.name)) + '\\b', 'g'), `<span class="me-name">${esc(m.name)}</span>`);
     const nick = e.type === 'notice' ? `-${D.botNick}-` : e.type === 'cmd' ? '&gt;' : `&lt;${D.botNick}&gt;`;
-    return `<div class="line t-${esc(e.type)}${e.mine && filter === 'all' ? ' mine' : ''}"><span class="ts">[${hhmm(e.t)}]</span><span class="nick">${nick}</span><span class="msg">${msg}</span></div>`;
+    // Your own events get a ▲ (good for you) or ▼ (bad for you) marker. In "My events", two-player
+    // events are also recoloured from your point of view instead of the challenger's.
+    const you = e.mine && m && e.type !== 'cmd' && e.type !== 'notice' ? outcomeFor(e, m.name) : '';
+    const mark = e.mine && e.type !== 'cmd' && e.type !== 'notice'
+      ? `<span class="you${you ? ' you-' + you : ''}"${you ? ` title="${you === 'good' ? 'Good for you' : 'Bad for you'}"` : ''}>${you === 'good' ? '▲' : you === 'bad' ? '▼' : ''}</span>`
+      : '';
+    const forYou = filter === 'mine' && e.mine && TWO_SIDED.has(e.type) ? ' for-' + (you || 'none') : '';   // 'none': e.g. a team battle where only the other team's clocks changed
+    return `<div class="line t-${esc(e.type)}${e.mine && filter === 'all' ? ' mine' : ''}${forYou}"><span class="ts">[${hhmm(e.t)}]</span><span class="nick">${nick}</span>${mark}<span class="msg">${msg}</span></div>`;
   }
 
   function nearBottom(el) { return el.scrollHeight - el.scrollTop - el.clientHeight < 60; }

@@ -60,6 +60,12 @@ button, input, select { font: inherit; color: inherit; }
 .line .ts { color: var(--muted); margin-right: 6px; }
 .line .nick { color: var(--accent); margin-right: 6px; }
 .line.mine { background: rgba(255, 216, 102, 0.06); border-left: 2px solid var(--me); padding-left: 6px; margin-left: -8px; }
+.line .you { display: inline-block; width: 1.4em; font-size: 11px; }
+.you-good { color: var(--good); }
+.you-bad { color: var(--bad); }
+.line.for-good .msg { color: var(--good); }
+.line.for-bad .msg { color: var(--bad); }
+.line.for-none .msg { color: var(--muted); }
 .line .me-name { color: var(--me); font-weight: 700; }
 .t-level .msg { color: #fff; }
 .t-item .msg { color: var(--item); }
