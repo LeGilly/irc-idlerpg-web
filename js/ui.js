@@ -42,7 +42,7 @@
     const m = IRPG.me();
     if (m) msg = msg.replace(new RegExp('\\b' + escRe(esc(m.name)) + '\\b', 'g'), `<span class="me-name">${esc(m.name)}</span>`);
     const nick = e.type === 'notice' ? `-${D.botNick}-` : e.type === 'cmd' ? '&gt;' : `&lt;${D.botNick}&gt;`;
-    return `<div class="line t-${e.type}${e.mine && filter === 'all' ? ' mine' : ''}"><span class="ts">[${hhmm(e.t)}]</span><span class="nick">${nick}</span><span class="msg">${msg}</span></div>`;
+    return `<div class="line t-${esc(e.type)}${e.mine && filter === 'all' ? ' mine' : ''}"><span class="ts">[${hhmm(e.t)}]</span><span class="nick">${nick}</span><span class="msg">${msg}</span></div>`;
   }
 
   function nearBottom(el) { return el.scrollHeight - el.scrollTop - el.clientHeight < 60; }
@@ -111,7 +111,7 @@
     return D.slots.map(s => {
       const it = p.items[s.key];
       const name = it ? `<span class="${it.unique ? 'unique' : ''}">${esc(it.name)}</span>` : '<span class="none">none</span>';
-      return `<tr><td class="slot">${esc(s.label)}</td><td>${name}</td><td class="lvl">${it ? it.lvl : ''}</td></tr>`;
+      return `<tr><td class="slot">${esc(s.label)}</td><td>${name}</td><td class="lvl">${it ? esc(it.lvl) : ''}</td></tr>`;
     }).join('');
   }
 
@@ -122,7 +122,7 @@
   function renderPlayers() {
     const rows = ranked().map((p, i) => {
       const cls = [p.isMe ? 'me' : '', p.online ? '' : 'offline'].join(' ');
-      return `<tr class="${cls}" data-id="${p.id}"><td>${i + 1}</td><td class="name"><span class="al al-${p.align}">${ALIGN_SYM[p.align]}</span>${esc(p.name)}</td><td>${p.level}</td><td>${IRPG.itemSum(p)}</td><td>${p.online ? shortDur(p.ttl) : 'offline'}</td></tr>`;
+      return `<tr class="${cls}" data-id="${esc(p.id)}"><td>${i + 1}</td><td class="name"><span class="al al-${esc(p.align)}">${ALIGN_SYM[p.align] || ''}</span>${esc(p.name)}</td><td>${esc(p.level)}</td><td>${esc(IRPG.itemSum(p))}</td><td>${p.online ? shortDur(p.ttl) : 'offline'}</td></tr>`;
     });
     $('playersBody').innerHTML = rows.join('');
     renderInspect();
@@ -130,8 +130,8 @@
   function renderInspect() {
     const p = inspectId && IRPG.state.players.find(x => x.id === inspectId);
     if (!p) { $('inspect').innerHTML = '<p class="hint">Click a player to see their equipment.</p>'; return; }
-    $('inspect').innerHTML = `<h4>${esc(p.name)}, the level ${p.level} ${esc(p.cls)}</h4>
-      <p class="hint">${ALIGN[p.align]} &middot; ${p.online ? 'online' : 'offline'} &middot; ${p.wins} won / ${p.losses} lost &middot; idled ${humanDur(p.idled)} &middot; at [${p.x}, ${p.y}]</p>
+    $('inspect').innerHTML = `<h4>${esc(p.name)}, the level ${esc(p.level)} ${esc(p.cls)}</h4>
+      <p class="hint">${esc(ALIGN[p.align] || '')} &middot; ${p.online ? 'online' : 'offline'} &middot; ${esc(p.wins)} won / ${esc(p.losses)} lost &middot; idled ${esc(humanDur(p.idled))} &middot; at [${esc(p.x)}, ${esc(p.y)}]</p>
       <table class="items">${itemsHtml(p)}</table>`;
   }
 
@@ -205,12 +205,12 @@
   function showAway(a) {
     if (a.levels === 0 && a.events === 0 && a.realGap < 600) return;
     const items = [
-      `Level <b>${a.levelFrom}</b> → <b>${a.levelTo}</b>`,
-      `${a.items} item upgrade${a.items === 1 ? '' : 's'}`,
-      `${a.wins} battle${a.wins === 1 ? '' : 's'} won, ${a.losses} lost`
+      `Level <b>${esc(a.levelFrom)}</b> → <b>${esc(a.levelTo)}</b>`,
+      `${esc(a.items)} item upgrade${a.items === 1 ? '' : 's'}`,
+      `${esc(a.wins)} battle${a.wins === 1 ? '' : 's'} won, ${esc(a.losses)} lost`
     ];
-    if (a.quests) items.push(`${a.quests} quest${a.quests === 1 ? '' : 's'} completed`);
-    const speedNote = IRPG.state.speed > 1 ? ` At ${IRPG.state.speed}× speed, that is ${humanDur(a.gameGap)} of game time.` : '';
+    if (a.quests) items.push(`${esc(a.quests)} quest${a.quests === 1 ? '' : 's'} completed`);
+    const speedNote = IRPG.state.speed > 1 ? ` At ${esc(IRPG.state.speed)}× speed, that is ${humanDur(a.gameGap)} of game time.` : '';
     $('awayText').innerHTML = `<p>You were away for ${humanDur(a.realGap)}.${speedNote} Your hero kept idling:</p><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul><p>See <b>My events</b> for the details.</p>`;
     $('awayModal').hidden = false;
   }
